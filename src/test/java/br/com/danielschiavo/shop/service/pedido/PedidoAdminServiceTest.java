@@ -2,9 +2,11 @@ package br.com.danielschiavo.shop.service.pedido;
 
 import static org.mockito.ArgumentMatchers.any;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +21,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import br.com.danielschiavo.feign.pedido.FileStoragePedidoComumServiceClient;
 import br.com.danielschiavo.infra.security.UsuarioAutenticadoService;
-import br.com.danielschiavo.repository.pedido.PedidoRepository;
+import br.com.danielschiavo.mapper.PedidoComumMapperImpl;
 import br.com.danielschiavo.service.cliente.ClienteUtilidadeService;
 import br.com.danielschiavo.shop.model.cliente.Cliente;
 import br.com.danielschiavo.shop.model.cliente.Cliente.ClienteBuilder;
@@ -42,7 +45,9 @@ import br.com.danielschiavo.shop.model.pedido.pagamento.MostrarPagamentoDTO;
 import br.com.danielschiavo.shop.model.pedido.pagamento.Pagamento;
 import br.com.danielschiavo.shop.model.produto.Produto;
 import br.com.danielschiavo.shop.model.produto.Produto.ProdutoBuilder;
-import br.com.danielschiavo.shop.service.filestorage.FileStoragePedidoService;
+import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProduto;
+import br.com.danielschiavo.shop.model.produto.tipoentregaproduto.TipoEntregaProduto;
+import br.com.danielschiavo.shop.repository.pedido.PedidoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PedidoAdminServiceTest {
@@ -57,7 +62,7 @@ class PedidoAdminServiceTest {
 	private PedidoRepository pedidoRepository;
 	
 	@Mock
-	private FileStoragePedidoService fileStoragePedidoService;
+	private FileStoragePedidoComumServiceClient fileStoragePedidoService;
 	
 	@Mock
 	private Cliente cliente;
@@ -76,18 +81,32 @@ class PedidoAdminServiceTest {
     @BeforeEach
     void setUp() {
         // Configura explicitamente o mock no spy
-    	PedidoMapperImpl pedidoMapper = new PedidoMapperImpl();
-    	pedidoAdminService.setPedidoMapper(pedidoMapper);
+    	PedidoComumMapperImpl pedidoComumMapper = new PedidoComumMapperImpl();
+    	pedidoAdminService.setPedidoMapper(pedidoComumMapper);
     }
 	
 	@Test
 	void pegarPedidosClientePorId() {
 		//ARRANGE
 		//Cliente
-		Cliente cliente = clienteBuilder.id(1L).cpf("12345678994").nome("Silvana").sobrenome("Pereira da silva").dataNascimento(LocalDate.of(2000, 3, 3)).dataCriacaoConta(LocalDate.now()).email("silvana.dasilva@gmail.com").senha("{noop}123456").celular("27999833653").fotoPerfil("Qualquerfoto.jpeg").getCliente();
+		Cliente cliente = clienteBuilder.id(1L).cpf("12345678994").nome("Silvana").sobrenome("Pereira da silva").dataNascimento(LocalDate.of(2000, 3, 3)).dataCriacaoConta(LocalDate.now()).email("silvana.dasilva@gmail.com").senha("{noop}123456").celular("27999833653").fotoPerfil("Qualquerfoto.jpeg").build();
 		//Produto
-		Produto produto = produtoBuilder.id(1L).nome("Mouse gamer").descricao("Descricao Mouse gamer").preco(200.00).quantidade(100).arquivoProdutoIdNomePosicao(1l, "Padrao.jpeg", (byte) 0).getProduto();
-		Produto produto2 = produtoBuilder.id(2L).nome("Teclado gamer").descricao("Descricao Teclado gamer").preco(200.00).quantidade(100).arquivoProdutoIdNomePosicao(1l, "Padrao.jpeg", (byte) 0).getProduto();
+		Produto produto = produtoBuilder.id(1L)
+										.nome("Mouse gamer")
+										.descricao("Descricao Mouse gamer")
+										.preco(BigDecimal.valueOf(200.00))
+										.quantidade(100)
+										.arquivosProduto(Set.of(ArquivoProduto.builder().nome("Padrao.jpeg").posicao((byte) 0).build()))
+										.tiposEntrega(Set.of(TipoEntregaProduto.builder().tipoEntrega(TipoEntrega.RETIRADA_NA_LOJA).build()))
+										.subCategoriaId(1L).build();
+		Produto produto2 = produtoBuilder.id(2L)
+										 .nome("Teclado gamer")
+										 .descricao("Descricao Teclado gamer")
+										 .preco(BigDecimal.valueOf(200.00))
+										 .quantidade(100)
+										 .arquivosProduto(Set.of(ArquivoProduto.builder().nome("Padrao.jpeg").posicao((byte) 0).build()))
+										 .tiposEntrega(Set.of(TipoEntregaProduto.builder().tipoEntrega(TipoEntrega.RETIRADA_NA_LOJA).build()))
+										 .subCategoriaId(1L).build();
 		//Endereco
 		Endereco endereco = enderecoBuilder.cep("12345678").rua("Divinopolis").numero("15").complemento("Sem complemento").bairro("Bela vista").cidade("Cariacica").estado("ES").build();
 		//Pedido
@@ -98,8 +117,8 @@ class PedidoAdminServiceTest {
 		
 		byte[] bytesImagem = "Hello world".getBytes();
 		ArquivoInfoDTO arquivoInfoDTO = new ArquivoInfoDTO("Padrao.jpeg", bytesImagem);
-		BDDMockito.when(fileStoragePedidoService.pegarImagemPedidoPorNome(any())).thenReturn(arquivoInfoDTO);		Long idCliente = 1L;
-		BDDMockito.when(clienteUtilidadeService.verificarSeClienteExistePorId(idCliente)).thenReturn(cliente);
+		BDDMockito.when(fileStoragePedidoService.pegarImagemPedido(any(), any())).thenReturn(arquivoInfoDTO);		Long idCliente = 1L;
+		BDDMockito.when(clienteUtilidadeService.pegarClientePorId(idCliente)).thenReturn(cliente);
 		Pageable pageable = PageRequest.of(0, 10);
 		BDDMockito.when(pedidoRepository.findAllByCliente(cliente, pageable)).thenReturn(pagePedido);
 		

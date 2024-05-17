@@ -5,10 +5,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import br.com.danielschiavo.mapper.cliente.ClienteMapper;
-import br.com.danielschiavo.repository.cliente.ClienteRepository;
+import br.com.danielschiavo.feign.FileStoragePerfilComumServiceClient;
+import br.com.danielschiavo.infra.security.UsuarioAutenticadoService;
+import br.com.danielschiavo.mapper.ClienteComumMapper;
 import br.com.danielschiavo.shop.model.cliente.Cliente;
 import br.com.danielschiavo.shop.model.cliente.dto.MostrarClienteDTO;
+import br.com.danielschiavo.shop.model.filestorage.ArquivoInfoDTO;
+import br.com.danielschiavo.shop.repository.cliente.ClienteRepository;
 import lombok.Setter;
 
 @Service
@@ -19,10 +22,13 @@ public class ClienteAdminService {
 	private ClienteRepository clienteRepository;
 	
 	@Autowired
-	private FileStoragePerfilService fileService;
+	private FileStoragePerfilComumServiceClient fileService;
 	
 	@Autowired
-	private ClienteMapper clienteMapper;
+	private ClienteComumMapper clienteMapper;
+	
+	@Autowired
+	private UsuarioAutenticadoService usuarioAutenticadoService;
 	
 
 	public void adminDeletarClientePorId(Long idCliente) {
@@ -30,8 +36,12 @@ public class ClienteAdminService {
 	}
 	
 	public Page<MostrarClienteDTO> adminDetalharTodosClientes(Pageable pageable) {
+		String tokenComBearer = usuarioAutenticadoService.getTokenComBearer();
 		Page<Cliente> pageClientes = clienteRepository.findAll(pageable);
-		return pageClientes.map(cliente -> clienteMapper.clienteParaMostrarClienteDTO(cliente, fileService));
+		return pageClientes.map(cliente -> {
+			ArquivoInfoDTO fotoPerfil = fileService.getFotoPerfil(cliente.getFotoPerfil(), tokenComBearer);
+			return clienteMapper.clienteParaMostrarClienteDTO(cliente, fotoPerfil);
+		});
 	}
 
 //	------------------------------

@@ -23,7 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import br.com.danielschiavo.shop.JwtUtilTest;
+import br.com.danielschiavo.JwtUtilTest;
 import br.com.danielschiavo.shop.model.produto.categoria.CriarCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.MostrarCategoriaDTO;
 import br.com.danielschiavo.shop.service.produto.CategoriaAdminService;

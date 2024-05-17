@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -27,19 +27,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import br.com.danielschiavo.shop.JwtUtilTest;
-import br.com.danielschiavo.shop.model.filestorage.ArquivoInfoDTO;
+import br.com.danielschiavo.JwtUtilTest;
 import br.com.danielschiavo.shop.model.pedido.TipoEntrega;
 import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.MostrarCategoriaComSubCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.MostrarCategoriaComSubCategoriaDTO.MostrarCategoriaComSubCategoriaDTOBuilder;
 import br.com.danielschiavo.shop.model.produto.dto.AlterarProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.DetalharProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.MostrarProdutosDTO;
 import br.com.danielschiavo.shop.model.produto.dto.AlterarProdutoDTO.AlterarProdutoDTOBuilder;
+import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO.CadastrarProdutoDTOBuilder;
+import br.com.danielschiavo.shop.model.produto.dto.DetalharProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.DetalharProdutoDTO.DetalharProdutoDTOBuilder;
+import br.com.danielschiavo.shop.model.produto.dto.MostrarProdutosDTO;
 import br.com.danielschiavo.shop.model.produto.dto.MostrarProdutosDTO.MostrarProdutosDTOBuilder;
 import br.com.danielschiavo.shop.service.produto.ProdutoAdminService;
 
@@ -126,18 +125,17 @@ class ProdutoAdminControllerTest {
 	@DisplayName("Cadastrar produto deve retornar http 201 quando informacoes validas são enviadas")
 	void cadastrarProduto_DtoETokenAdminValido_DeveRetornarCreated() throws IOException, Exception {
 		//ARRANGE
-		MostrarCategoriaComSubCategoriaDTO categoria = categoriaBuilder.categoria(1L, "Computadores")
-																			.comSubCategoria(1L, "Mouses")
-																	   .getCategoria();
-		MostrarProdutosDTO mostrarProdutosDTO = mostrarProdutosDTOBuilder.id(1L).nome("Produto1").preco(BigDecimal.valueOf(200.00)).quantidade(5).ativo(true).categoria(categoria).primeiraImagem("Hello world".getBytes()).build();
-		when(produtoAdminService.cadastrarProduto(any())).thenReturn(mostrarProdutosDTO);
+		Map<String, String> resposta = new HashMap<>();
+		resposta.put("id", String.valueOf(1L));
+		resposta.put("mensagem", "Produto cadastrado com sucesso!");
+		when(produtoAdminService.cadastrarProduto(any())).thenReturn(resposta);
 		
 		//ACT
 		Set<TipoEntrega> tipoEntrega = Set.of(TipoEntrega.CORREIOS,TipoEntrega.RETIRADA_NA_LOJA);
 		ArquivoProdutoDTO arquivoProdutoDTO = new ArquivoProdutoDTO("NomeArquivo.jpeg", (byte) 0);
 		ArquivoProdutoDTO arquivoProdutoDTO2 = new ArquivoProdutoDTO("NomeVideo.avi", (byte) 1);
-		List<ArquivoProdutoDTO> listaArquivoProdutoDTO = new ArrayList<>(List.of(arquivoProdutoDTO, arquivoProdutoDTO2));
-		CadastrarProdutoDTO cadastrarProdutoDTO = cadastrarProdutoDTOBuilder.nome("Produto1").descricao("Descricao produto1").preco(BigDecimal.valueOf(200.00)).quantidade(5).ativo(true).idSubCategoria(1L).tipoEntrega(tipoEntrega).arquivos(listaArquivoProdutoDTO).build();
+		Set<ArquivoProdutoDTO> listaArquivoProdutoDTO = Set.of(arquivoProdutoDTO, arquivoProdutoDTO2);
+		CadastrarProdutoDTO cadastrarProdutoDTO = cadastrarProdutoDTOBuilder.nome("Produto1").descricao("Descricao produto1").preco(BigDecimal.valueOf(200.00)).quantidade(5).ativo(true).subCategoriaId(1L).tiposEntrega(tipoEntrega).arquivos(listaArquivoProdutoDTO).build();
 		var response = mvc.perform(post("/shop/admin/produto")
 								  .header("Authorization", "Bearer " + tokenAdmin)
 								  .contentType(MediaType.APPLICATION_JSON)
@@ -146,8 +144,7 @@ class ProdutoAdminControllerTest {
 		
 		//ASSERT
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.CREATED.value());
-        var jsonEsperado = mostrarProdutosDTOJson.write(mostrarProdutosDTO).getJson();
-        assertThat(response.getContentAsString()).isEqualTo(jsonEsperado);
+        assertThat(response.getContentAsString()).isEqualTo(resposta.get("mensagem"));
 	}
 	
 	@Test
@@ -177,22 +174,15 @@ class ProdutoAdminControllerTest {
 	@DisplayName("Alterar produto por id deve retornar http 200 quando informacoes estão válidas")
 	void alterarProdutoPorId_DtoETokenAdminValido_DeveRetornarOk() throws IOException, Exception {
 		//ARRANGE
-		MostrarCategoriaComSubCategoriaDTO categoria = categoriaBuilder.categoria(1L, "Computadores")
-																			.comSubCategoria(1L, "Mouses")
-																	   .getCategoria();
-		byte[] bytes = "Hello world".getBytes();
-		ArquivoInfoDTO arquivoInfoDTO = new ArquivoInfoDTO("NomeArquivo.jpeg", bytes);
-		ArquivoInfoDTO arquivoInfoDTO2 = new ArquivoInfoDTO("NomeVideo.avi", bytes);
-		List<ArquivoInfoDTO> listaArquivoInfoDTO = new ArrayList<>(List.of(arquivoInfoDTO, arquivoInfoDTO2));
-		DetalharProdutoDTO detalharProdutoDTO = detalharProdutoDTOBuilderBuilder.id(1L).nome("Nome produto").descricao("descricao").preco(BigDecimal.valueOf(200,00)).quantidade(5).ativo(true).categoria(categoria).arquivos(listaArquivoInfoDTO).build();
-		when(produtoAdminService.alterarProdutoPorId(any(), any())).thenReturn(detalharProdutoDTO);
+		String mensagem = "Produto alterado com sucesso!";
+		when(produtoAdminService.alterarProdutoPorId(any(), any())).thenReturn(mensagem);
 		
 		//ACT
 		Set<TipoEntrega> tipoEntrega = Set.of(TipoEntrega.CORREIOS,TipoEntrega.RETIRADA_NA_LOJA);
 		ArquivoProdutoDTO arquivoProdutoDTO = new ArquivoProdutoDTO("NomeArquivo.jpeg", (byte) 0);
 		ArquivoProdutoDTO arquivoProdutoDTO2 = new ArquivoProdutoDTO("NomeVideo.avi", (byte) 1);
-		List<ArquivoProdutoDTO> listaArquivoProdutoDTO = new ArrayList<>(List.of(arquivoProdutoDTO2, arquivoProdutoDTO));
-		AlterarProdutoDTO alterarProdutoDTO = alterarProdutoDTOBuilder.nome("Nome produto").descricao("descricao").preco(BigDecimal.valueOf(200.00)).quantidade(5).ativo(true).idSubCategoria(1L).tipoEntrega(tipoEntrega).arquivos(listaArquivoProdutoDTO).build();
+		Set<ArquivoProdutoDTO> listaArquivoProdutoDTO = Set.of(arquivoProdutoDTO, arquivoProdutoDTO2);
+		AlterarProdutoDTO alterarProdutoDTO = alterarProdutoDTOBuilder.nome("Nome produto").descricao("descricao").preco(BigDecimal.valueOf(200.00)).quantidade(5).ativo(true).subCategoriaId(1L).tiposEntrega(tipoEntrega).arquivos(listaArquivoProdutoDTO).build();
 		Long idProduto = 1L;
 		var response = mvc.perform(put("/shop/admin/produto/{idProduto}", idProduto)
 								  .header("Authorization", "Bearer " + tokenAdmin)
@@ -202,8 +192,7 @@ class ProdutoAdminControllerTest {
 		
 		//ASSERT
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        var jsonEsperado = detalharProdutoDTOJson.write(detalharProdutoDTO).getJson();
-        assertThat(response.getContentAsString()).isEqualTo(jsonEsperado);
+        assertThat(response.getContentAsString()).isEqualTo(mensagem);
 	}
 	
 	@Test

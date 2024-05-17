@@ -1,5 +1,7 @@
 package br.com.danielschiavo.shop.controller.produto;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,8 +16,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import br.com.danielschiavo.shop.model.produto.dto.AlterarProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.DetalharProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.MostrarProdutosDTO;
 import br.com.danielschiavo.shop.service.produto.ProdutoAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -24,7 +24,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping
 @Tag(name = "Produto - Admin", description = "Todos endpoints relacionados com os produtos da loja, para uso exclusivo dos administradores")
 public class ProdutoAdminController {
 
@@ -35,22 +35,27 @@ public class ProdutoAdminController {
 	@Operation(summary = "Deleta um produto com o id fornecido no parametro da requisição")
 	@SecurityRequirement(name = "bearer-key")
 	public ResponseEntity<?> deletarProdutoPorId(@PathVariable @NotNull Long idProduto) {
-		produtoService.deletarProdutoPorId(idProduto);
-		return ResponseEntity.noContent().build();
+		String respostaDeletarProduto = produtoService.deletarProdutoPorId(idProduto);
+		return ResponseEntity.ok(respostaDeletarProduto);
 	}
 	
 	@PostMapping(path = "/admin/produto")
 	@ResponseBody
 	@SecurityRequirement(name = "bearer-key")
 	@Operation(summary = "Cadastra um novo produto")
-	public ResponseEntity<MostrarProdutosDTO> cadastrarProduto(
+	public ResponseEntity<?> cadastrarProduto(
 			@RequestBody @Valid CadastrarProdutoDTO cadastrarProdutoDTO,
 			UriComponentsBuilder uriBuilder
  			) {
-		var mostrarProdutosDTO = produtoService.cadastrarProduto(cadastrarProdutoDTO);
-		
-		var uri = uriBuilder.path("/products/{id}").buildAndExpand(mostrarProdutosDTO.getId()).toUri();
-		return ResponseEntity.created(uri).body(mostrarProdutosDTO);
+		try {
+			Map<String, String> respostaCadastrarProduto = produtoService.cadastrarProduto(cadastrarProdutoDTO);
+			
+			var uri = uriBuilder.path("/products/{id}").buildAndExpand(respostaCadastrarProduto.get("id")).toUri();
+			return ResponseEntity.created(uri).body(respostaCadastrarProduto.get("mensagem"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 
 	@PutMapping("/admin/produto/{idProduto}")
@@ -60,9 +65,14 @@ public class ProdutoAdminController {
 			@PathVariable Long idProduto,
 			@RequestBody AlterarProdutoDTO alterarProdutoDTO
 			) {
-		DetalharProdutoDTO detalharProdutoDTO = produtoService.alterarProdutoPorId(idProduto, alterarProdutoDTO);
-
-		return ResponseEntity.ok(detalharProdutoDTO);
+		try {
+			String respostaAlterarProduto = produtoService.alterarProdutoPorId(idProduto, alterarProdutoDTO);
+			
+			return ResponseEntity.ok(respostaAlterarProduto);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 
 }

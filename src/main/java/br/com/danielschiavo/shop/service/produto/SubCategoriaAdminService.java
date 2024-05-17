@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.danielschiavo.repository.produto.SubCategoriaRepository;
 import br.com.danielschiavo.service.produto.CategoriaUtilidadeService;
 import br.com.danielschiavo.service.produto.SubCategoriaUtilidadeService;
 import br.com.danielschiavo.shop.model.ValidacaoException;
@@ -15,6 +14,7 @@ import br.com.danielschiavo.shop.model.produto.subcategoria.AlterarSubCategoriaD
 import br.com.danielschiavo.shop.model.produto.subcategoria.CadastrarSubCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.subcategoria.MostrarSubCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.subcategoria.SubCategoria;
+import br.com.danielschiavo.shop.repository.produto.SubCategoriaRepository;
 import jakarta.validation.Valid;
 
 @Service

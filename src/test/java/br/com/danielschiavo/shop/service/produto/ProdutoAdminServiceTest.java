@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
@@ -21,10 +22,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import br.com.danielschiavo.mapper.produto.ProdutoMapper;
-import br.com.danielschiavo.repository.cliente.CarrinhoRepository;
-import br.com.danielschiavo.repository.produto.ProdutoRepository;
-import br.com.danielschiavo.repository.produto.SubCategoriaRepository;
+import br.com.danielschiavo.feign.produto.FileStorageProdutoComumServiceClient;
 import br.com.danielschiavo.service.produto.CategoriaUtilidadeService;
 import br.com.danielschiavo.service.produto.ProdutoUtilidadeService;
 import br.com.danielschiavo.service.produto.SubCategoriaUtilidadeService;
@@ -32,6 +30,7 @@ import br.com.danielschiavo.shop.model.filestorage.ArquivoInfoDTO;
 import br.com.danielschiavo.shop.model.pedido.TipoEntrega;
 import br.com.danielschiavo.shop.model.produto.Produto;
 import br.com.danielschiavo.shop.model.produto.Produto.ProdutoBuilder;
+import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProduto;
 import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.Categoria;
 import br.com.danielschiavo.shop.model.produto.categoria.Categoria.CategoriaBuilder;
@@ -39,9 +38,10 @@ import br.com.danielschiavo.shop.model.produto.dto.AlterarProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.AlterarProdutoDTO.AlterarProdutoDTOBuilder;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO.CadastrarProdutoDTOBuilder;
-import br.com.danielschiavo.shop.model.produto.dto.DetalharProdutoDTO;
-import br.com.danielschiavo.shop.model.produto.dto.MostrarProdutosDTO;
-import br.com.danielschiavo.shop.service.filestorage.FileStorageProdutoService;
+import br.com.danielschiavo.shop.model.produto.tipoentregaproduto.TipoEntregaProduto;
+import br.com.danielschiavo.shop.repository.cliente.CarrinhoRepository;
+import br.com.danielschiavo.shop.repository.produto.ProdutoRepository;
+import br.com.danielschiavo.shop.repository.produto.SubCategoriaRepository;
 import br.com.danielschiavo.shop.service.produto.validacoes.ValidadorCadastrarNovoProduto;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,7 +63,7 @@ class ProdutoAdminServiceTest {
 	private ProdutoUtilidadeService produtoUtilidadeService;
 	
 	@Mock
-	private FileStorageProdutoService fileStorageProdutoService;
+	private FileStorageProdutoComumServiceClient fileStorageProdutoService;
 	
 	@Mock
 	private CategoriaUtilidadeService categoriaUtilidadeService;
@@ -102,93 +102,59 @@ class ProdutoAdminServiceTest {
 												  .comSubCategoria(1L, "Teclado")
 											  .getCategoria();
 		//CadastrarProdutoDTO
+		var arquivo = new ArquivoProdutoDTO("Padrao.jpeg", (byte) 0);
 		CadastrarProdutoDTO cadastrarProdutoDTO = 
 				cadastrarProdutoDTOBuilder.nome("Teclado")
 										  .descricao("Descrição teclado")
 										  .preco(BigDecimal.valueOf(200.00))
 										  .quantidade(999)
 										  .ativo(true)
-										  .idSubCategoria(1L)
-										  .tipoEntrega(Set.of(TipoEntrega.ENTREGA_DIGITAL))
-										  .arquivos(List.of(new ArquivoProdutoDTO("Padrao.jpeg", (byte) 0))).build();
+										  .subCategoriaId(1L)
+										  .tiposEntrega(Set.of(TipoEntrega.ENTREGA_DIGITAL))
+										  .arquivos(Set.of(arquivo)).build();
 		//Validadores
 		validadores.addAll(List.of(validador1, validador2));
 		//ArquivoInfoDTO
 		ArquivoInfoDTO arquivoInfoDTO = new ArquivoInfoDTO("Padrao.jpeg", "Bytes do arquivo Padrao.jpeg".getBytes());
 		//When
 		when(subCategoriaUtilidadeService.verificarSeExisteSubCategoriaPorId(any(Long.class))).thenReturn(categoria.getSubCategorias().get(0));
-		when(produtoUtilidadeService.pegarNomePrimeiraImagem(any(Produto.class))).thenReturn(cadastrarProdutoDTO.arquivos().get(0).nome());
-		when(fileStorageProdutoService.pegarArquivoProdutoPorNome(any(String.class))).thenReturn(arquivoInfoDTO);
+		when(produtoUtilidadeService.pegarNomePrimeiraImagem(any(Produto.class))).thenReturn(arquivo.nome());
+		when(fileStorageProdutoService.pegarArquivoProduto(any(String.class))).thenReturn(arquivoInfoDTO);
 		when(categoriaUtilidadeService.verificarSeExisteCategoriaPorId(any(Long.class))).thenReturn(categoria);
 		
 		//ACT
-		MostrarProdutosDTO mostrarProdutosDTO = produtoAdminService.cadastrarProduto(cadastrarProdutoDTO);
+		Map<String, String> mostrarProdutosDTO = produtoAdminService.cadastrarProduto(cadastrarProdutoDTO);
 		
 		//ASSERT
 		BDDMockito.then(validador1).should().validar(cadastrarProdutoDTO);
 		BDDMockito.then(validador2).should().validar(cadastrarProdutoDTO);
 		verify(produtoRepository, times(1)).save(any(Produto.class));
-		//Produto
-		Assertions.assertEquals(cadastrarProdutoDTO.nome(), mostrarProdutosDTO.getNome());
-		Assertions.assertEquals(cadastrarProdutoDTO.preco(), mostrarProdutosDTO.getPreco());
-		Assertions.assertEquals(cadastrarProdutoDTO.quantidade(), mostrarProdutosDTO.getQuantidade());
-		Assertions.assertEquals(cadastrarProdutoDTO.ativo(), mostrarProdutosDTO.getAtivo());
-		Assertions.assertArrayEquals(arquivoInfoDTO.bytesArquivo(), mostrarProdutosDTO.getPrimeiraImagem());
-		//Categoria
-		Assertions.assertEquals(categoria.getId(), mostrarProdutosDTO.getCategoria().getId());
-		Assertions.assertEquals(categoria.getNome(), mostrarProdutosDTO.getCategoria().getNome());
-		//SubCategoria
-		Assertions.assertEquals(cadastrarProdutoDTO.idSubCategoria(), mostrarProdutosDTO.getCategoria().getSubCategoria().id());
-		Assertions.assertEquals(categoria.getSubCategorias().get(0).getNome(), mostrarProdutosDTO.getCategoria().getSubCategoria().nome());
 	}
 	
 	@Test
 	void alterarProdutoPorId() {
 		//ARRANGE
-		//Categoria e SubCategoria
-		Categoria categoria = categoriaBuilder.categoria(1L, "Computadores")
-												  .comSubCategoria(1L, "Teclado")
-												  .comSubCategoria(2L, "Outronome")
-											  .getCategoria();
 		//Produto
 		Produto produto = produtoBuilder.id(1L)
 										 .nome("Teclado gamer")
 										 .descricao("Descricao Teclado gamer")
-										 .preco(200.00)
+										 .preco(BigDecimal.valueOf(200.00))
 										 .quantidade(100)
-										 .tipoEntregaIdTipo(4L, TipoEntrega.ENTREGA_DIGITAL)
-										 .arquivoProdutoIdNomePosicao(2L, "Padrao.jpeg", (byte) 0)
-										 .subCategoria(categoria.getSubCategorias().get(1))
-										 .getProduto();
+										 .tiposEntrega(Set.of(TipoEntregaProduto.builder().tipoEntrega(TipoEntrega.ENTREGA_DIGITAL).build()))
+										 .arquivosProduto(Set.of(ArquivoProduto.builder().nome("Padrao.jpeg").posicao((byte) 0).build()))
+										 .subCategoriaId(1L)
+										 .build();
 		
-		System.out.println(" TESTrapazE1 " + produto.getSubCategoria().getCategoria().getId());
 		Long idProduto = 1L;
-		when(produtoUtilidadeService.verificarSeProdutoExistePorId(idProduto)).thenReturn(produto);
-		when(subCategoriaUtilidadeService.verificarSeExisteSubCategoriaPorId(idProduto)).thenReturn(categoria.getSubCategorias().get(0));
-		when(categoriaUtilidadeService.verificarSeExisteCategoriaPorId(categoria.getId())).thenReturn(categoria);
+		when(produtoUtilidadeService.pegarProdutoPorId(idProduto)).thenReturn(produto);
 		
 		//ACT
-		AlterarProdutoDTO alterarProdutoDTO = alterarProdutoDTOBuilder.nome("Novo nome do teclado").descricao("Nova descricao do Teclado").preco(BigDecimal.valueOf(500.00)).quantidade(500).ativo(true).idSubCategoria(categoria.getSubCategorias().get(0).getId()).tipoEntrega(Set.of(TipoEntrega.CORREIOS, TipoEntrega.RETIRADA_NA_LOJA)).arquivos(List.of(new ArquivoProdutoDTO("Padrao.jpeg", (byte) 0))).build();
-		DetalharProdutoDTO detalharProdutoDTO = produtoAdminService.alterarProdutoPorId(idProduto, alterarProdutoDTO);
+		AlterarProdutoDTO alterarProdutoDTO = alterarProdutoDTOBuilder.nome("Novo nome do teclado").descricao("Nova descricao do Teclado").preco(BigDecimal.valueOf(500.00)).quantidade(500).ativo(true).subCategoriaId(2L).tiposEntrega(Set.of(TipoEntrega.CORREIOS, TipoEntrega.RETIRADA_NA_LOJA)).arquivos(Set.of(ArquivoProdutoDTO.builder().nome("Padrao.jpeg").posicao((byte) 0).build())).build();
+		String respostaAlterarProduto = produtoAdminService.alterarProdutoPorId(idProduto, alterarProdutoDTO);
 		
 		//ASSERT
 		//Produto
-		Assertions.assertEquals(produto.getId(), detalharProdutoDTO.getId());
-		Assertions.assertEquals(produto.getNome(), detalharProdutoDTO.getNome());
-		Assertions.assertEquals(produto.getDescricao(), detalharProdutoDTO.getDescricao());
-		Assertions.assertEquals(produto.getPreco(), detalharProdutoDTO.getPreco());
-		Assertions.assertEquals(produto.getQuantidade(), detalharProdutoDTO.getQuantidade());
-		Assertions.assertEquals(produto.getAtivo(), detalharProdutoDTO.getAtivo());
-		detalharProdutoDTO.getArquivos().forEach(arquivo -> {
-			Assertions.assertEquals(produto.getArquivosProduto().get(0).getNome(), arquivo.nomeArquivo());
-			Assertions.assertNotNull(arquivo.bytesArquivo());
-		});
-		// Categoria
-		Assertions.assertEquals(categoria.getId(), detalharProdutoDTO.getCategoria().getId());
-		Assertions.assertEquals(categoria.getNome(), detalharProdutoDTO.getCategoria().getNome());
-		// SubCategoria
-		Assertions.assertEquals(produto.getSubCategoria().getId(), detalharProdutoDTO.getCategoria().getSubCategoria().id());
-		Assertions.assertEquals(produto.getSubCategoria().getNome(), detalharProdutoDTO.getCategoria().getSubCategoria().nome());
+		Assertions.assertEquals("Produto alterado com sucesso!", respostaAlterarProduto);
 	}
 
 }

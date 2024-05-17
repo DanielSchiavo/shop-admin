@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping
 @SecurityRequirement(name = "bearer-key")
 @Tag(name = "Pedido - Admin", description = "Todos endpoints relacionados com os pedidos dos clientes para uso exclusivo dos administradores")
 public class PedidoAdminController {

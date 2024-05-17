@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import br.com.danielschiavo.shop.infra.exceptions.ValidacaoException;
+import br.com.danielschiavo.shop.model.ValidacaoException;
 import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProdutoDTO;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
 

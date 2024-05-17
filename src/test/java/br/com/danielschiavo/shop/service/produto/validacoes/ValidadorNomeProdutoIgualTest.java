@@ -13,10 +13,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import br.com.danielschiavo.repository.produto.ProdutoRepository;
-import br.com.danielschiavo.shop.models.ValidacaoException;
-import br.com.danielschiavo.shop.models.produto.Produto;
-import br.com.danielschiavo.shop.models.produto.dto.CadastrarProdutoDTO;
+import br.com.danielschiavo.shop.model.ValidacaoException;
+import br.com.danielschiavo.shop.model.produto.Produto;
+import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
+import br.com.danielschiavo.shop.repository.produto.ProdutoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ValidadorNomeProdutoIgualTest {

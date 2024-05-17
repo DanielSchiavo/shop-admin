@@ -5,10 +5,10 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.danielschiavo.shop.infra.exceptions.ValidacaoException;
+import br.com.danielschiavo.shop.model.ValidacaoException;
 import br.com.danielschiavo.shop.model.produto.Produto;
 import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
-import br.com.danielschiavo.shop.repositories.produto.ProdutoRepository;
+import br.com.danielschiavo.shop.repository.produto.ProdutoRepository;
 
 @Service
 public class ValidadorNomeProdutoIgual implements ValidadorCadastrarNovoProduto {

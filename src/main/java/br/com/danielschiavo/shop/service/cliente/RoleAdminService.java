@@ -3,13 +3,14 @@ package br.com.danielschiavo.shop.service.cliente;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.danielschiavo.mapper.cliente.RoleMapper;
-import br.com.danielschiavo.repository.cliente.ClienteRepository;
 import br.com.danielschiavo.service.cliente.ClienteUtilidadeService;
 import br.com.danielschiavo.shop.model.ValidacaoException;
 import br.com.danielschiavo.shop.model.cliente.Cliente;
-import br.com.danielschiavo.shop.model.cliente.role.AdicionarRoleDTO;
+import br.com.danielschiavo.shop.model.cliente.role.RoleDTO;
+import br.com.danielschiavo.shop.model.cliente.role.NomeRole;
 import br.com.danielschiavo.shop.model.cliente.role.Role;
+import br.com.danielschiavo.shop.repository.cliente.ClienteRepository;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class RoleAdminService {
@@ -23,28 +24,32 @@ public class RoleAdminService {
 	@Autowired
 	private RoleMapper roleMapper;
 
-	public void adicionarRole(AdicionarRoleDTO adicionarRoleDTO) {
-		String nomeRole = adicionarRoleDTO.role();
-		if (!nomeRole.equals("ADMIN")) {
+	public String adicionarRole(RoleDTO adicionarRoleDTO) {
+		NomeRole nomeRole = adicionarRoleDTO.role();
+		if (nomeRole != NomeRole.ADMIN) {
 			throw new ValidacaoException("Envie uma role válida! não existe a role " + nomeRole);
 		}
 		
-		Cliente cliente = clienteUtilidadeService.verificarSeClienteExistePorId(adicionarRoleDTO.idCliente());
-		Role role = roleMapper.stringRoleParaRoleEntity(nomeRole, cliente);
+		Cliente cliente = clienteUtilidadeService.pegarClientePorId(adicionarRoleDTO.idCliente());
+		Role role = roleMapper.stringRoleParaRoleEntity(adicionarRoleDTO, cliente);
 		cliente.adicionarRole(role);
 		clienteRepository.save(cliente);
+		
+		return "Usuario promovido a " + nomeRole + " com sucesso!";
 	}
 
-	public void removerRole(Long idCliente, String nomeRole) {
-		if (!nomeRole.equals("ADMIN")) {
-			throw new ValidacaoException("Envie uma role válida! não existe a role " + nomeRole);
+	public String removerRole(RoleDTO removerRoleDTO) {
+		if (removerRoleDTO.role() != NomeRole.ADMIN) {
+			throw new ValidacaoException("Envie uma role válida! não existe a role " + removerRoleDTO.role());
 		}
-		Cliente cliente = clienteUtilidadeService.verificarSeClienteExistePorId(idCliente);
+		Cliente cliente = clienteUtilidadeService.pegarClientePorId(removerRoleDTO.idCliente());
 		Role role = cliente.getRoles().stream()
-						.filter(r -> r.getRole().toString().endsWith(nomeRole))
-						.findFirst().orElseThrow(() -> new ValidacaoException("O cliente não possui a role de nome " + nomeRole));
+						.filter(r -> r.getRole().equals(removerRoleDTO.role()))
+						.findFirst().orElseThrow(() -> new ValidacaoException("O cliente não possui a role de nome " + removerRoleDTO.role()));
 		cliente.removerRole(role);
 		clienteRepository.save(cliente);
+		
+		return "Removido permissão de " + removerRoleDTO.role() + " do usuario com sucesso!";
 	}
 	
 }

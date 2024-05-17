@@ -4,12 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.danielschiavo.repository.produto.CategoriaRepository;
 import br.com.danielschiavo.service.produto.CategoriaUtilidadeService;
 import br.com.danielschiavo.shop.model.ValidacaoException;
 import br.com.danielschiavo.shop.model.produto.categoria.Categoria;
 import br.com.danielschiavo.shop.model.produto.categoria.CriarCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.MostrarCategoriaDTO;
+import br.com.danielschiavo.shop.repository.produto.CategoriaRepository;
 
 @Service
 public class CategoriaAdminService {

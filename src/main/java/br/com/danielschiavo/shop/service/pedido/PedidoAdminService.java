@@ -9,19 +9,24 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import br.com.danielschiavo.repository.pedido.PedidoRepository;
+import br.com.danielschiavo.feign.pedido.FileStoragePedidoComumServiceClient;
+import br.com.danielschiavo.infra.security.UsuarioAutenticadoService;
+import br.com.danielschiavo.mapper.PedidoComumMapper;
 import br.com.danielschiavo.service.cliente.ClienteUtilidadeService;
 import br.com.danielschiavo.shop.model.cliente.Cliente;
 import br.com.danielschiavo.shop.model.pedido.Pedido;
 import br.com.danielschiavo.shop.model.pedido.dto.MostrarPedidoDTO;
 import br.com.danielschiavo.shop.model.pedido.dto.MostrarProdutoDoPedidoDTO;
-import br.com.danielschiavo.shop.service.filestorage.FileStoragePedidoService;
+import br.com.danielschiavo.shop.repository.pedido.PedidoRepository;
 import lombok.Setter;
 
 @Service
-@Setter
+@Setter	
 public class PedidoAdminService {
 
+	@Autowired
+	private UsuarioAutenticadoService usuarioAutenticadoService;
+	
 	@Autowired
 	private PedidoRepository pedidoRepository;
 
@@ -29,20 +34,20 @@ public class PedidoAdminService {
 	private ClienteUtilidadeService clienteUtilidadeService;
 	
 	@Autowired
-	private FileStoragePedidoService fileStoragePedidoService;
+	private FileStoragePedidoComumServiceClient fileStoragePedidoService;
 	
 	@Autowired
-	private PedidoMapper pedidoMapper;
+	private PedidoComumMapper pedidoMapper;
 
 	public Page<MostrarPedidoDTO> pegarPedidosClientePorId(Long id, Pageable pageable) {
-		Cliente cliente = clienteUtilidadeService.verificarSeClienteExistePorId(id);
+		Cliente cliente = clienteUtilidadeService.pegarClientePorId(id);
+		String tokenComBearer = usuarioAutenticadoService.getTokenComBearer();
 
 		Page<Pedido> pagePedidos = pedidoRepository.findAllByCliente(cliente, pageable);
-		
 		List<MostrarPedidoDTO> list = new ArrayList<>();
 
 		for (Pedido pedido : pagePedidos) {
-			List<MostrarProdutoDoPedidoDTO> listaMostrarProdutoDoPedidoDTO = pedidoMapper.pedidoParaMostrarProdutoDoPedidoDTO(pedido, fileStoragePedidoService);
+			List<MostrarProdutoDoPedidoDTO> listaMostrarProdutoDoPedidoDTO = pedidoMapper.pedidoParaMostrarProdutoDoPedidoDTO(pedido, fileStoragePedidoService, tokenComBearer);
 
 			var mostrarPedidoDTO = new MostrarPedidoDTO(pedido, listaMostrarProdutoDoPedidoDTO);
 			list.add(mostrarPedidoDTO);

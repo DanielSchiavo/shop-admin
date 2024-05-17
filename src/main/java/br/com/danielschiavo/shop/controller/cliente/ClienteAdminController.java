@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping
 @SecurityRequirement(name = "bearer-key")
 @Tag(name = "Cliente - Admin", description = "Todos endpoints relacionados com o cliente para uso exclusivo dos administradores")
 public class ClienteAdminController {
@@ -29,8 +29,12 @@ public class ClienteAdminController {
 	@DeleteMapping("/admin/cliente/{idCliente}")
 	@Operation(summary = "Deleta o cliente pelo id fornecido no parametro da requisição")
 	public ResponseEntity<?> adminDeletarClientePorId(@PathVariable Long idCliente) {
-		clienteAdminService.adminDeletarClientePorId(idCliente);
-		return ResponseEntity.noContent().build();
+		try {
+			clienteAdminService.adminDeletarClientePorId(idCliente);
+			return ResponseEntity.noContent().build();
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 	
 	@GetMapping("/admin/cliente")

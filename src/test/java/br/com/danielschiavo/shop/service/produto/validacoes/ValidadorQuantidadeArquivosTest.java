@@ -1,6 +1,7 @@
 package br.com.danielschiavo.shop.service.produto.validacoes;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -11,9 +12,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import br.com.danielschiavo.shop.models.ValidacaoException;
-import br.com.danielschiavo.shop.models.produto.arquivosproduto.ArquivoProdutoDTO;
-import br.com.danielschiavo.shop.models.produto.dto.CadastrarProdutoDTO;
+import br.com.danielschiavo.shop.model.ValidacaoException;
+import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProdutoDTO;
+import br.com.danielschiavo.shop.model.produto.dto.CadastrarProdutoDTO;
 
 @ExtendWith(MockitoExtension.class)
 class ValidadorQuantidadeArquivosTest {
@@ -29,7 +30,7 @@ class ValidadorQuantidadeArquivosTest {
 	@Test
 	@DisplayName("Validador primeiro arquivo imagem não deve lançar exceção quando a quantidade de arquivosproduto forem até 10")
 	void ValidadorPrimeiroArquivoImagem_10ArquivosProduto_NaoDeveLancarExcecao() {
-        var listaArquivos = new ArrayList<ArquivoProdutoDTO>();
+        var listaArquivos = new HashSet<ArquivoProdutoDTO>();
         for (int i = 0; i < MAX_FILES; i++) {
         	listaArquivos.add(new ArquivoProdutoDTO("arquivo" + i + ".jpeg", (byte) i));
         }
@@ -41,7 +42,7 @@ class ValidadorQuantidadeArquivosTest {
 	@Test
 	@DisplayName("Validador primeiro arquivo imagem deve lançar exceção quando a quantidade de arquivosproduto forem maior do que 10")
 	void ValidadorPrimeiroArquivoImagem_MaiorQue10ArquivosProduto_DeveLancarExcecao() {
-        var listaArquivos = new ArrayList<ArquivoProdutoDTO>();
+        var listaArquivos = new HashSet<ArquivoProdutoDTO>();
         for (int i = 0; i < MAX_FILES + 1; i++) {
         	listaArquivos.add(new ArquivoProdutoDTO("arquivo" + i + ".jpeg",  (byte) i));
         }

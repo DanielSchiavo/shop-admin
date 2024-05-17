@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/shop")
+@RequestMapping
 @Tag(name = "Sub Categorias - Admin", description = "Todos endpoints relacionados com as subcategorias para uso exclusivo dos administradores")
 public class SubCategoriaAdminController {
 	

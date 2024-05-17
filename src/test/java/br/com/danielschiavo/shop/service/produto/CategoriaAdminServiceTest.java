@@ -16,13 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.danielschiavo.infra.security.UsuarioAutenticadoService;
-import br.com.danielschiavo.repository.produto.CategoriaRepository;
 import br.com.danielschiavo.service.produto.CategoriaUtilidadeService;
 import br.com.danielschiavo.shop.model.ValidacaoException;
 import br.com.danielschiavo.shop.model.cliente.Cliente;
 import br.com.danielschiavo.shop.model.produto.categoria.Categoria;
 import br.com.danielschiavo.shop.model.produto.categoria.CriarCategoriaDTO;
 import br.com.danielschiavo.shop.model.produto.categoria.MostrarCategoriaDTO;
+import br.com.danielschiavo.shop.repository.produto.CategoriaRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CategoriaAdminServiceTest {
