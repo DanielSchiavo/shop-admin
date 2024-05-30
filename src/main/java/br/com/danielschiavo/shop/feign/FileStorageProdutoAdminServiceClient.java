@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 import br.com.danielschiavo.shop.model.produto.arquivosproduto.ArquivoProdutoDTO;
 
-@FeignClient(name = "filestorage-produto-admin-service", url = "http://localhost:8080/shop-filestorage")
+@FeignClient(name = "filestorage-produto-admin-service", url = "${filestorage.service.client.url}")
 public interface FileStorageProdutoAdminServiceClient {
 
-	@GetMapping("/publico/filestorage/produto/{arquivo}")
+	@GetMapping("/publico/produto/{arquivo}")
 	ResponseEntity<List<ArquivoProdutoDTO>> verificarSeExisteArquivos(@PathVariable("arquivo") List<String> nomeArquivos);
 	
-	@DeleteMapping("/admin/filestorage/produto/{arquivo}")
+	@DeleteMapping("/admin/produto/{arquivo}")
 	ResponseEntity<List<ArquivoProdutoDTO>> deletarArquivosProduto(@PathVariable("arquivo") Set<String> arquivos, @RequestHeader("Authorization") String token);
 	
 }

@@ -119,7 +119,7 @@ class ProdutoAdminServiceTest {
 		//When
 		when(subCategoriaUtilidadeService.verificarSeExisteSubCategoriaPorId(any(Long.class))).thenReturn(categoria.getSubCategorias().get(0));
 		when(produtoUtilidadeService.pegarNomePrimeiraImagem(any(Produto.class))).thenReturn(arquivo.nome());
-		when(fileStorageProdutoService.pegarArquivoProduto(any(String.class))).thenReturn(arquivoInfoDTO);
+		when(fileStorageProdutoService.pegarArquivosProduto(any())).thenReturn(List.of(arquivoInfoDTO));
 		when(categoriaUtilidadeService.verificarSeExisteCategoriaPorId(any(Long.class))).thenReturn(categoria);
 		
 		//ACT

@@ -23,6 +23,7 @@ public class ValidadorArquivosProduto implements ValidadorCadastrarNovoProduto {
 		List<String> nomes = cadastrarProdutoDTO.arquivos().stream().map(a -> a.nome()).collect(Collectors.toList());
 		ResponseEntity<List<ArquivoProdutoDTO>> resposta = fileStorageProdutoAdminServiceClient.verificarSeExisteArquivos(nomes);
 		if (resposta.getStatusCode().is4xxClientError()) {
+			System.out.println(" Está entrando aqui ");
 			StringBuilder string = new StringBuilder();
 			List<ArquivoProdutoDTO> arquivos = resposta.getBody();
 			Boolean first = true;
